@@ -11,22 +11,48 @@ import os
 class MyQListView(QtGui.QListView):
     def dropEvent(self, drop_event):
         print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-        item_src = self.model().itemFromIndex(self.selectedIndexes()[0])
+        item_src = [self.model().itemFromIndex(index) for 
+                    index in self.selectedIndexes()]
         item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-        print item_src, item_dest
-        src_row = item_src.row()
+        print 'source, dest', item_src, item_dest
+        self.move_element(item_src, item_dest)
+        
+    def move_element(self, item_src, item_dest):
+        # là où on relache la souris
         if item_dest is None:
+            # si pas d'item à cet endroit, on met à la fin
             dest_row = self.model().rowCount()
         else :
+            # sinon, on met à l'endroit demandé
             dest_row = item_dest.row()
-        self.move_element(dest_row, src_row)
+        print "dest_row", dest_row    
+        # item_src liste dans l'ordre où on clique les objets
+        # on la remet dans l'ordre des photos
+        item_src = sorted(item_src, key = lambda x: -x.row())
+        src_rows =[i.row() for i in item_src]
+        items_to_insert = [self.parent().list_img.pop(i) for i in src_rows]
+        print "reste liste", self.parent().list_img
+        items_to_insert.reverse()
+        print "items to insert", items_to_insert
+        nb_elem_inf_dest  = sum([1 for i in src_rows if i < dest_row])
+        print "nb_elem inf dest", nb_elem_inf_dest
+        print "endroit d'insertion", dest_row-nb_elem_inf_dest
+        self.parent().list_img = self.parent().list_img[:dest_row-nb_elem_inf_dest] +\
+                                items_to_insert + self.parent().list_img[dest_row-nb_elem_inf_dest:]
+                                
+#        i = 0
+#        for selected in item_src:
+#            src_row = selected.row()
+##            print 'src_row', src_row
+#            print 'nom scr_row', self.parent().list_img[src_row]
+#            
+#            name = self.parent().list_img.pop(src_row - i)                                
+#            if src_row < dest_row :
+#                i += 1
+#            self.parent().list_img.insert(dest_row, name)
 
-    def move_element(self, dest_row, src_row):
-        print self.parent().list_img
-        #self.parent().list_img[dest_row], self.parent().list_img[src_row] = self.parent().list_img[src_row], self.parent().list_img[dest_row] 
-        name = self.parent().list_img.pop(src_row)        
-        self.parent().list_img.insert(dest_row, name)      
-        print self.parent().list_img        
+                  
+#            print self.parent().list_img        
         self.parent().update_model()
 
 
@@ -55,6 +81,7 @@ class ExplorateurListView(QtGui.QWidget):
         self.vue_liste.setMovement(QtGui.QListView.Snap)
         self.vue_liste.setGridSize(QtCore.QSize(150,150))
         self.vue_liste.setIconSize(QtCore.QSize(100, 100))
+        self.vue_liste.setSelectionMode(QtGui.QListView.ExtendedSelection)
         self.vue_liste.setModel(self.modele)
 #        self.vue_liste.setRootIndex(self.modele.index("."))     
 #        self.modele.setNameFilters(filters)
