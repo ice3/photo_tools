@@ -12,6 +12,9 @@ import time
 import re
 from itertools import groupby
 
+#path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
+path_to_test = r'.'
+
 def tryint(s):
     try:
         return int(s)
@@ -92,7 +95,7 @@ class ExplorateurListView(QtGui.QWidget):
 
         self.modele = QtGui.QStandardItemModel(self)
         self.vue_liste = MyQListView(self)
-        self.create_model('.')
+        self.create_model(path_to_test)
         
         self.vue_liste.setFlow(0)
         self.vue_liste.setWrapping(True)
@@ -142,7 +145,7 @@ class ExplorateurListView(QtGui.QWidget):
         t1 = time.clock()        
         for file_name in self.list_img:
             t2 = time.clock()
-            pixmap = QtGui.QPixmap(file_name)
+            pixmap = QtGui.QPixmap(path_to_test + os.sep + file_name)
             pixmap = pixmap.scaledToWidth(100, QtCore.Qt.SmoothTransformation)
             
 #            if not self.cache.find(file_name, pixmap):
