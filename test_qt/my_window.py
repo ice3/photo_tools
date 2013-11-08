@@ -7,6 +7,8 @@ Created on Mon Nov 04 18:38:18 2013
 from PyQt4 import QtGui, QtCore
 import os
 
+import time
+
 
 class MyQListView(QtGui.QListView):
     def dropEvent(self, drop_event):
@@ -68,7 +70,8 @@ class ExplorateurListView(QtGui.QWidget):
 #        self.modele.setIconProvider(self.theIconProvider)
         
         #TODO vider le cache quand on change de dossier            
-        self.cache = QtGui.QPixmapCache()
+        #self.cache = QtGui.QPixmapCache()
+        self.cache = {}
 
         self.modele = QtGui.QStandardItemModel(self)
         self.vue_liste = MyQListView(self)
@@ -89,15 +92,27 @@ class ExplorateurListView(QtGui.QWidget):
         self.setLayout(self.layout)      
         
     def update_model(self):
+        t1 = time.clock()        
         self.modele.clear()
+        print 'temps modele.clear() : ', time.clock()-t1
+        t1 = time.clock()
         for file_name in self.list_img:
+            t2 = time.clock()
             pixmap = QtGui.QPixmap()
-            if not self.cache.find(file_name, pixmap):
+#            if not self.cache.find(file_name, pixmap):
+            if not file_name in self.cache:                
+                print 'cache pas exister', file_name
                 pixmap = QtGui.QPixmap(file_name)
-                pixmap = pixmap.scaledToWidth(100)                                     
+                pixmap = pixmap.scaledToWidth(100)
+                self.cache[file_name] = pixmap
+            else:
+                pixmap = self.cache[file_name]                     
             icone = QtGui.QIcon(pixmap)
             item = QtGui.QStandardItem(icone, file_name) 
-            self.modele.appendRow(item)                
+            self.modele.appendRow(item)    
+            print 'temps update 1 image : ', time.clock()-t2, file_name
+            
+        print "temps update modele : ", time.clock()-t1
 
     def create_model(self, chemin):
         img_ext = ('bmp', 'png', 'jpg', 'jpeg')
@@ -106,14 +121,22 @@ class ExplorateurListView(QtGui.QWidget):
 #        dossier = QtCore.QDir(chemin)        
 #        infosContenuDossier = dossier.entryInfoList(QtCore.QDir.AllEntries | 
 #                QtCore.QDir.NoDotAndDotDot, QtCore.QDir.DirsFirst)
+        t1 = time.clock()        
         for file_name in self.list_img:
+            t2 = time.clock()
             pixmap = QtGui.QPixmap(file_name)
-            pixmap = pixmap.scaledToWidth(100)
-            if not self.cache.find(file_name, pixmap):
-                self.cache.insert(file_name, pixmap)                        
+            pixmap = pixmap.scaledToWidth(100, QtCore.Qt.SmoothTransformation)
+            
+#            if not self.cache.find(file_name, pixmap):
+#                self.cache.insert(file_name, pixmap)       
+            if not file_name in self.cache:
+                self.cache[file_name] = pixmap                 
             icone = QtGui.QIcon(pixmap)
             item = QtGui.QStandardItem(icone, file_name) 
             self.modele.appendRow(item)
+            print 'temps chargement 1 image : ', time.clock()-t2, file_name
+        print "temps creation modele : ", time.clock()-t1
+            
             
             
             

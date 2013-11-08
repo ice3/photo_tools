@@ -20,6 +20,7 @@ if __name__ == '__main__':
     Method called to launch VIVECA program, set-up language, etc.
     """
     #create a Qt application
+    print 'debut'
     APP = QtGui.QApplication(sys.argv)
 
     MA_FENETRE = my_window.ExplorateurListView()
