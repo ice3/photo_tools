@@ -12,8 +12,8 @@ import time
 import re
 from itertools import groupby
 
-path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
-#path_to_test = r'.'
+#path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
+path_to_test = r'.'
 
 def tryint(s):
     try:
@@ -105,8 +105,11 @@ class ExplorateurListView(QtGui.QWidget):
         self.vue_liste.setViewMode(QtGui.QListView.IconMode)
         self.vue_liste.setResizeMode(QtGui.QListView.Adjust)
         self.vue_liste.setMovement(QtGui.QListView.Snap)
-        self.vue_liste.setGridSize(QtCore.QSize(150,150))
+        self.vue_liste.setGridSize(QtCore.QSize(150, 150))
         self.vue_liste.setIconSize(QtCore.QSize(100, 100))
+#        self.vue_liste.setLayoutMode(QtGui.QListView.Batched)
+        self.vue_liste.setBatchSize(3)
+#        self.vue_liste.setUniformItemSizes(True)
         self.vue_liste.setSelectionMode(QtGui.QListView.ExtendedSelection)
         self.vue_liste.setModel(self.modele)
 #        self.vue_liste.setRootIndex(self.modele.index("."))     
@@ -115,7 +118,14 @@ class ExplorateurListView(QtGui.QWidget):
         self.layout.addWidget(self.slider)
         self.setLayout(self.layout)    
         
-        self.slider.sliderMoved.connect(self.update_icon_size)
+        self.slider.valueChanged.connect(self.update_icon_size)
+    
+    def wheelEvent(self, event):
+        delta = self.slider.value() + event.delta()/20
+        modified = QtGui.QApplication.keyboardModifiers()
+        print modified
+        if modified == QtCore.Qt.ControlModifier:
+            self.slider.setValue(delta)
         
     def update_model(self):
         t1 = time.clock()        
