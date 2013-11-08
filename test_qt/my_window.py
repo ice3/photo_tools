@@ -65,11 +65,15 @@ class MyQListView(QtGui.QListView):
         self.parent().update_model()
 
     def wheelEvent(self, event):
-        delta = self.slider.value() + event.delta()/20
+        super(MyQListView, self).wheelEvent(event)
+        delta = self.parent().slider.value() + event.delta()/20
         modified = QtGui.QApplication.keyboardModifiers()
         print modified
         if modified == QtCore.Qt.ControlModifier:
-            self.slider.setValue(delta)
+            self.parent().slider.setValue(delta)
+
+    def dragMoveEvent(self, event):
+        pass
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
