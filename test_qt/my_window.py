@@ -27,18 +27,12 @@ def alphanum_key(s):
     """
     return [ tryint(c) for c in re.split('([0-9]+)', s) ]
 
-  
-    
 
 class MyQListView(QtGui.QListView):
-    def dropEvent(self, drop_event):
-        print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-        item_src = [self.model().itemFromIndex(index) for 
-                    index in self.selectedIndexes()]
-        item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-        print 'source, dest', item_src, item_dest
-        self.move_element(item_src, item_dest)
-        
+    def __init__(self, parent):
+        QtGui.QListView.__init__(self, parent)
+        self.setAcceptDrops(True)
+
     def move_element(self, item_src, item_dest):
         # là où on relache la souris
         if item_dest is None:
@@ -68,12 +62,43 @@ class MyQListView(QtGui.QListView):
         super(MyQListView, self).wheelEvent(event)
         delta = self.parent().slider.value() + event.delta()/20
         modified = QtGui.QApplication.keyboardModifiers()
-        print modified
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
-
+        
     def dragMoveEvent(self, event):
-        pass
+        print "call dragMove"
+#        super(MyQListView, self).mouseMoveEvent(event)
+        #TODO : http://stackoverflow.com/questions/14395799/pyqt4-drag-and-drop
+        event.setDropAction(QtCore.Qt.MoveAction)
+        event.accept()
+        
+    def mousePressEvent(self, event):
+        drag = QtGui.QDrag(self)
+##        print event.source()
+        mimeData = QtCore.QMimeData()
+        size = QtCore.QSize(40, 40)
+        pixmap = self.parent().cache[self.parent().list_img[0]].scaled(size)
+#        painter = QtGui.QPainter(pixmap)
+#        painter.setCompositionMode(painter.CompositionMode_DestinationIn)
+#        painter.fillRect(pixmap.rect(), QtGui.QColor(0, 0, 0, 127))
+#        painter.end()
+        drag.setMimeData(mimeData)
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(-QtCore.QPoint(0, 0))
+#        print event.pos()
+        drag.exec_(QtCore.Qt.MoveAction)
+        
+    def dropEvent(self, drop_event):
+        print "call drop"
+#        print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
+        item_src = [self.model().itemFromIndex(index) for 
+                    index in self.selectedIndexes()]
+        item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
+#        print 'source, dest', item_src, item_dest
+        self.move_element(item_src, item_dest)
+        drop_event.setDropAction(QtCore.Qt.MoveAction)
+        drop_event.accept()
+        
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
@@ -162,6 +187,8 @@ class ExplorateurListView(QtGui.QWidget):
                 self.cache[file_name] = pixmap                 
             icone = QtGui.QIcon(pixmap)
             item = QtGui.QStandardItem(icone, file_name) 
+            item.setDragEnabled(True)
+            item.setDropEnabled(True)
             self.modele.appendRow(item)
             print 'temps chargement 1 image : ', time.clock()-t2, file_name
         print "temps creation modele : ", time.clock()-t1
