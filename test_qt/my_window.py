@@ -9,6 +9,23 @@ import os
 
 import time
 
+import re
+from itertools import groupby
+
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+
+  
+    
 
 class MyQListView(QtGui.QListView):
     def dropEvent(self, drop_event):
@@ -103,7 +120,7 @@ class ExplorateurListView(QtGui.QWidget):
             if not file_name in self.cache:                
                 print 'cache pas exister', file_name
                 pixmap = QtGui.QPixmap(file_name)
-                pixmap = pixmap.scaledToWidth(100)
+                pixmap = pixmap.scaledToWidth(500)
                 self.cache[file_name] = pixmap
             else:
                 pixmap = self.cache[file_name]                     
@@ -118,6 +135,7 @@ class ExplorateurListView(QtGui.QWidget):
         img_ext = ('bmp', 'png', 'jpg', 'jpeg')
         self.list_img = [name for name in os.listdir(chemin) 
                     if name.lower().endswith(img_ext)]
+        self.list_img.sort(key=alphanum_key)
 #        dossier = QtCore.QDir(chemin)        
 #        infosContenuDossier = dossier.entryInfoList(QtCore.QDir.AllEntries | 
 #                QtCore.QDir.NoDotAndDotDot, QtCore.QDir.DirsFirst)
@@ -243,7 +261,7 @@ class MyMainWindow(QtGui.QWidget):
     
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
-        self.finder = TableSwitcher(12, 8, self)
+#        self.finder = TableSwitcher(12, 8, self)
         plop = QtGui.QHBoxLayout(self)
         self.setLayout(plop)
         plop.addWidget(self.finder)
