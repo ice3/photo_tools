@@ -61,22 +61,15 @@ class MyQListView(QtGui.QListView):
         print "endroit d'insertion", dest_row-nb_elem_inf_dest
         self.parent().list_img = self.parent().list_img[:dest_row-nb_elem_inf_dest] +\
                                 items_to_insert + self.parent().list_img[dest_row-nb_elem_inf_dest:]
-                                
-#        i = 0
-#        for selected in item_src:
-#            src_row = selected.row()
-##            print 'src_row', src_row
-#            print 'nom scr_row', self.parent().list_img[src_row]
-#            
-#            name = self.parent().list_img.pop(src_row - i)                                
-#            if src_row < dest_row :
-#                i += 1
-#            self.parent().list_img.insert(dest_row, name)
-
-                  
-#            print self.parent().list_img        
+                                     
         self.parent().update_model()
 
+    def wheelEvent(self, event):
+        delta = self.slider.value() + event.delta()/20
+        modified = QtGui.QApplication.keyboardModifiers()
+        print modified
+        if modified == QtCore.Qt.ControlModifier:
+            self.slider.setValue(delta)
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
@@ -120,13 +113,8 @@ class ExplorateurListView(QtGui.QWidget):
         
         self.slider.valueChanged.connect(self.update_icon_size)
     
-    def wheelEvent(self, event):
-        delta = self.slider.value() + event.delta()/20
-        modified = QtGui.QApplication.keyboardModifiers()
-        print modified
-        if modified == QtCore.Qt.ControlModifier:
-            self.slider.setValue(delta)
-        
+
+            
     def update_model(self):
         t1 = time.clock()        
         self.modele.clear()
