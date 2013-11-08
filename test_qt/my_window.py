@@ -12,8 +12,8 @@ import time
 import re
 from itertools import groupby
 
-#path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
-path_to_test = r'.'
+path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
+#path_to_test = r'.'
 
 def tryint(s):
     try:
@@ -81,7 +81,10 @@ class MyQListView(QtGui.QListView):
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtGui.QVBoxLayout()
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider.setRange(20, 500)
+        self.slider.setValue(100)
 #        self.modele = QtGui.QFileSystemModel(self)
 #        filters = QtCore.QStringList("*.JPG")
 #        self.modele.setRootPath(QtCore.QDir.currentPath())
@@ -109,7 +112,10 @@ class ExplorateurListView(QtGui.QWidget):
 #        self.vue_liste.setRootIndex(self.modele.index("."))     
 #        self.modele.setNameFilters(filters)
         self.layout.addWidget(self.vue_liste)
-        self.setLayout(self.layout)      
+        self.layout.addWidget(self.slider)
+        self.setLayout(self.layout)    
+        
+        self.slider.sliderMoved.connect(self.update_icon_size)
         
     def update_model(self):
         t1 = time.clock()        
@@ -122,8 +128,8 @@ class ExplorateurListView(QtGui.QWidget):
 #            if not self.cache.find(file_name, pixmap):
             if not file_name in self.cache:                
                 print 'cache pas exister', file_name
-                pixmap = QtGui.QPixmap(file_name)
-                pixmap = pixmap.scaledToWidth(500)
+                pixmap = QtGui.QPixmap(path_to_test + os.sep + file_name)
+                pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
                 self.cache[file_name] = pixmap
             else:
                 pixmap = self.cache[file_name]                     
@@ -146,7 +152,7 @@ class ExplorateurListView(QtGui.QWidget):
         for file_name in self.list_img:
             t2 = time.clock()
             pixmap = QtGui.QPixmap(path_to_test + os.sep + file_name)
-            pixmap = pixmap.scaledToWidth(100, QtCore.Qt.SmoothTransformation)
+            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
             
 #            if not self.cache.find(file_name, pixmap):
 #                self.cache.insert(file_name, pixmap)       
@@ -157,7 +163,10 @@ class ExplorateurListView(QtGui.QWidget):
             self.modele.appendRow(item)
             print 'temps chargement 1 image : ', time.clock()-t2, file_name
         print "temps creation modele : ", time.clock()-t1
-            
+        
+    def update_icon_size(self, event):
+        self.vue_liste.setIconSize(QtCore.QSize(event, event))
+        self.vue_liste.setGridSize(QtCore.QSize(event + 50, event + 50))    
             
             
             
