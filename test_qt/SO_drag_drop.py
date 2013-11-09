@@ -46,7 +46,6 @@ class Button(QtGui.QPushButton):
         else:
             print 'copied'
 
-
     def mousePressEvent(self, e):
         QtGui.QPushButton.mousePressEvent(self, e)
         if e.button() == QtCore.Qt.LeftButton:

@@ -65,40 +65,45 @@ class MyQListView(QtGui.QListView):
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
         
-    def dragMoveEvent(self, event):
-        print "call dragMove"
-#        super(MyQListView, self).mouseMoveEvent(event)
-        #TODO : http://stackoverflow.com/questions/14395799/pyqt4-drag-and-drop
-        event.setDropAction(QtCore.Qt.MoveAction)
-        event.accept()
-        
-    def mousePressEvent(self, event):
-        drag = QtGui.QDrag(self)
-##        print event.source()
-        mimeData = QtCore.QMimeData()
-        size = QtCore.QSize(40, 40)
-        pixmap = self.parent().cache[self.parent().list_img[0]].scaled(size)
-#        painter = QtGui.QPainter(pixmap)
-#        painter.setCompositionMode(painter.CompositionMode_DestinationIn)
-#        painter.fillRect(pixmap.rect(), QtGui.QColor(0, 0, 0, 127))
-#        painter.end()
-        drag.setMimeData(mimeData)
-        drag.setPixmap(pixmap)
-        drag.setHotSpot(-QtCore.QPoint(0, 0))
-#        print event.pos()
-        drag.exec_(QtCore.Qt.MoveAction)
-        
-    def dropEvent(self, drop_event):
-        print "call drop"
-#        print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-        item_src = [self.model().itemFromIndex(index) for 
-                    index in self.selectedIndexes()]
-        item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-#        print 'source, dest', item_src, item_dest
-        self.move_element(item_src, item_dest)
-        drop_event.setDropAction(QtCore.Qt.MoveAction)
-        drop_event.accept()
-        
+#    def dragMoveEvent(self, event):
+#        print "call dragMove"
+##        super(MyQListView, self).mouseMoveEvent(event)
+#        #TODO : http://stackoverflow.com/questions/14395799/pyqt4-drag-and-drop
+#        event.setDropAction(QtCore.Qt.MoveAction)
+#        event.accept()
+#        
+#        drag = QtGui.QDrag(self)
+###        print event.source()
+#        mimeData = QtCore.QMimeData()
+#        size = QtCore.QSize(40, 40)
+#        pixmap = self.parent().cache[self.parent().list_img[0]].scaled(size)
+##        painter = QtGui.QPainter(pixmap)
+##        painter.setCompositionMode(painter.CompositionMode_DestinationIn)
+##        painter.fillRect(pixmap.rect(), QtGui.QColor(0, 0, 0, 127))
+##        painter.end()
+#        drag.setMimeData(mimeData)
+#        drag.setPixmap(pixmap)
+#        drag.setHotSpot(-QtCore.QPoint(0, 0))
+##        print event.pos()
+#        print 'a'
+#        drop_action = drag.exec_(QtCore.Qt.MoveAction)
+#        print 'b'        
+#        self.parent().update_model()
+#        
+#    def dropEvent(self, drop_event):
+#        print "call drop"
+##        print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
+#        item_src = [self.model().itemFromIndex(index) for 
+#                    index in self.selectedIndexes()]
+#        item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
+##        print 'source, dest', item_src, item_dest
+#        self.move_element(item_src, item_dest)
+#        drop_event.setDropAction(QtCore.Qt.MoveAction)
+#        drop_event.accept()
+
+class MyModel (QtGui.QStandardItemModel):
+    def supportedDropActions(self):
+        return QtCore.Qt.MoveAction | QtCore.Qt.CopyAction         
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
@@ -113,26 +118,33 @@ class ExplorateurListView(QtGui.QWidget):
 #        self.modele.setNameFilterDisables(False)
         self.theIconProvider = MyIconProvider()
 #        self.modele.setIconProvider(self.theIconProvider)
-        
         #TODO vider le cache quand on change de dossier            
         #self.cache = QtGui.QPixmapCache()
         self.cache = {}
 
-        self.modele = QtGui.QStandardItemModel(self)
-        self.vue_liste = MyQListView(self)
+        self.modele = MyModel(self)#QtGui.QStandardItemModel(self)
+        self.vue_liste =  MyQListView(self) #QtGui.QListView(self) ###
         self.create_model(path_to_test)
         
-        self.vue_liste.setFlow(0)
-        self.vue_liste.setWrapping(True)
+        self.vue_liste.setSelectionMode(QtGui.QListView.ExtendedSelection)
+        self.vue_liste.setDragEnabled(True)
+        self.vue_liste.setAcceptDrops(True)
+        self.vue_liste.setDropIndicatorShown(True)
+#        self.vue_liste.setFlow(0)
+#        self.vue_liste.setWrapping(True)
         self.vue_liste.setViewMode(QtGui.QListView.IconMode)
-        self.vue_liste.setResizeMode(QtGui.QListView.Adjust)
-        self.vue_liste.setMovement(QtGui.QListView.Snap)
-        self.vue_liste.setGridSize(QtCore.QSize(150, 150))
-        self.vue_liste.setIconSize(QtCore.QSize(100, 100))
+#        self.vue_liste.setResizeMode(QtGui.QListView.Adjust)
+#        self.vue_liste.setMovement(QtGui.QListView.Snap)
+#        self.vue_liste.setGridSize(QtCore.QSize(150, 150))
+#        self.vue_liste.setIconSize(QtCore.QSize(100, 100))
+        self.vue_liste.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+#        self.vue_liste.setDefaultDropAction(QtCore.Qt.MoveAction)
+        
+#        self.vue_liste.setDragDropOverwriteMode(False)
 #        self.vue_liste.setLayoutMode(QtGui.QListView.Batched)
         self.vue_liste.setBatchSize(3)
 #        self.vue_liste.setUniformItemSizes(True)
-        self.vue_liste.setSelectionMode(QtGui.QListView.ExtendedSelection)
+        
         self.vue_liste.setModel(self.modele)
 #        self.vue_liste.setRootIndex(self.modele.index("."))     
 #        self.modele.setNameFilters(filters)
@@ -141,6 +153,7 @@ class ExplorateurListView(QtGui.QWidget):
         self.setLayout(self.layout)    
         
         self.slider.valueChanged.connect(self.update_icon_size)
+
     
 
             
@@ -189,6 +202,7 @@ class ExplorateurListView(QtGui.QWidget):
             item = QtGui.QStandardItem(icone, file_name) 
             item.setDragEnabled(True)
             item.setDropEnabled(True)
+            item.setFlags(QtCore.Qt.ItemIsDragEnabled and QtCore.Qt.ItemIsDropEnabled)
             self.modele.appendRow(item)
             print 'temps chargement 1 image : ', time.clock()-t2, file_name
         print "temps creation modele : ", time.clock()-t1
@@ -200,7 +214,73 @@ class ExplorateurListView(QtGui.QWidget):
             
             
             
-            
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
             
             
             
