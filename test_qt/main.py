@@ -12,7 +12,7 @@ import my_window
 # Python Qt4 bindings for GUI objects
 from PyQt4 import QtGui
 
-#for translation process :*
+#for translation process :*()
 from PyQt4 import QtCore
 
 if __name__ == '__main__':

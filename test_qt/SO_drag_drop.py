@@ -38,6 +38,7 @@ class Button(QtGui.QPushButton):
         drag.setPixmap(pixmap)
         # shift the Pixmap so that it coincides with the cursor position
         drag.setHotSpot(e.pos())
+        print 'source : ', drag.source(), '    dest : ', drag.target()
 
         # start the drag operation
         # exec_ will return the accepted action from dropEvent
@@ -45,6 +46,8 @@ class Button(QtGui.QPushButton):
             print 'moved'
         else:
             print 'copied'
+        print 'source : ', drag.source(), '    dest : ', drag.target()
+
 
     def mousePressEvent(self, e):
         QtGui.QPushButton.mousePressEvent(self, e)
