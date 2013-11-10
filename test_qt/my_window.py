@@ -10,10 +10,9 @@ import os
 import time
 
 import re
-from itertools import groupby
 
 #path_to_test = r'D://Amandine DONNEES//Photos//Photos famille//2013//Lyon_12-13-14-Avril'
-path_to_test = r'.'
+path_to_test = r'./img/rapide'
 
 def tryint(s):
     try:
@@ -31,6 +30,7 @@ def alphanum_key(s):
     
 
 class MyQListView(QtGui.QListView):
+
     def dropEvent(self, drop_event):
         print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
         item_src = [self.model().itemFromIndex(index) for 
@@ -71,9 +71,55 @@ class MyQListView(QtGui.QListView):
         print modified
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
+            self.change_grid_size()
 
     def dragMoveEvent(self, event):
         pass
+
+
+    def resizeEvent(self, event):
+
+        super(MyQListView, self).resizeEvent(event)
+        self.change_grid_size()
+
+    def change_grid_size(self):
+        """
+        Change l'espace entre les items en fonction de la taille de la listView.
+        Quand on change la taille de la fenetre (et donc de la liste) les items se réorganisent automatiquement pour
+        qu'il y ait le bon nombre d'item par ligne, mais ça laisse un gros espace sur la droite. C'est ce que l'on veut
+        changer.
+        """
+
+        dx = 50 + 10
+        width = self.size().width()
+        print '\nlargeur widget : ', width,
+
+        img_size = self.parent().slider.value()
+        grid_elem_size = img_size + dx + self.spacing()
+        print '||  taille grille : ', grid_elem_size,
+
+        nb_grid_shown = width / grid_elem_size
+        print ' ||  nb elem aff : ', nb_grid_shown,
+
+        width_used = nb_grid_shown * grid_elem_size
+        empty_width = width - width_used
+        print '||  empty width : ', empty_width,
+
+        try :
+            delta_width = empty_width / nb_grid_shown
+        except ZeroDivisionError :
+            delta_width = 0
+        print "||  delta : ", delta_width
+
+        width = QtCore.QSize(delta_width , 0) +  self.gridSize()
+        print 'largeur : ', width
+        #self.setGridSize(width)
+
+        #new_size_width = (self.size().width() - x_util)*1.0/nb_img_aff
+        #print 'size_width', new_size_width
+        #new_size = QtCore.QSize(new_size_width + taille_image, taille_image)
+        #print new_size
+        #self.setGridSize(new_size)
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
@@ -86,7 +132,6 @@ class ExplorateurListView(QtGui.QWidget):
 #        filters = QtCore.QStringList("*.JPG")
 #        self.modele.setRootPath(QtCore.QDir.currentPath())
 #        self.modele.setNameFilterDisables(False)
-        self.theIconProvider = MyIconProvider()
 #        self.modele.setIconProvider(self.theIconProvider)
         
         #TODO vider le cache quand on change de dossier            
@@ -169,150 +214,3 @@ class ExplorateurListView(QtGui.QWidget):
     def update_icon_size(self, event):
         self.vue_liste.setIconSize(QtCore.QSize(event, event))
         self.vue_liste.setGridSize(QtCore.QSize(event + 50, event + 50))    
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-class ExplorateurGraphicView(QtGui.QGraphicsView):
-    def __init__(self):
-        QtGui.QGraphicsView.__init__(self)
-        self.scene = QtGui.QGraphicsScene(None)
-        self.setScene(self.scene)
-        self.taille = 50
-        pix = QtGui.QPixmap("DSCN2382.JPG").scaledToWidth(self.taille)
-        pix2 = QtGui.QPixmap("DSCN2382.JPG").scaledToWidth(self.taille)
-        pix3 = QtGui.QPixmap("DSCN2382.JPG").scaledToWidth(self.taille)
-        #pix.load("DSCN2382.JPG")
-        self.scene.addPixmap(pix)
-        self.scene.addPixmap(pix2)
-        self.scene.addPixmap(pix)
-        self.scene.addPixmap(pix3)
-        self.show()
-
-class MyIconProvider(QtGui.QFileIconProvider):    
-    def icon(self, info):
-        cache = QtGui.QPixmapCache()
-        filepath = info.canonicalFilePath()
-        pixmap = QtGui.QPixmap()        
-        if not cache.find(filepath, pixmap):
-            pixmap.load(filepath)
-            cache.insert(filepath, pixmap)
-        
-        if pixmap.isNull() :
-            return QtGui.QFileIconProvider.icon(info)
-        else :
-            return QtGui.QIcon(pixmap)            
-            
-            
-class TableViewDragDrop(QtGui.QTableView):
-    def dropEvent(self, dropEvent):
-        print self.model().itemFromIndex(self.indexAt(dropEvent.pos()))
-        item_src = self.model().itemFromIndex(self.selectedIndexes()[0])
-        item_dest = self.model().itemFromIndex(self.indexAt(dropEvent.pos()))
-        print item_src, item_dest
-        src_row = item_src.row()
-        src_col = item_src.column()
-        dest_row = item_dest.row()
-        dest_col = item_dest.column()
-        super(TableViewDragDrop,self).dropEvent(dropEvent)
-        self.model().setItem(dest_row, dest_col, item_src)
-        #self.model().setItem(src_row, src_col, item_dest)
-#        super(TableViewDragDrop,self).dropEvent(dropEvent)
-#        self.setItem(src_row,src_col, item_dest)
-
-
-class MyExplorateur(QtGui.QWidget):
-    def __init__(self):
-        QtGui.QMainWindow.__init__(self)
-        self.files = QtGui.QStandardItemModel(self)
-        #self.finder = QtGui.QTableView(self)
-        
-        #self.finder.dropEvent.connect(TableViewDragDrop.dropEvent)
-        self.finder = TableViewDragDrop(self)
-        self.taille = 20
-        self.finder.setIconSize(QtCore.QSize(self.taille, self.taille))
-        self.finder.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-        plop = QtGui.QHBoxLayout(self)
-        self.setLayout(plop)
-        plop.addWidget(self.finder)
-        self.finder.horizontalHeader().hide()
-        self.finder.verticalHeader().hide()
-        self.finder.setShowGrid(False)
-        self.create_model(".")
-        self.finder.setModel(self.files)
-        self.finder.resizeColumnsToContents()
-        self.finder.resizeRowsToContents()
-
-        
-    def create_model(self, chemin):
-        dossier = QtCore.QDir(chemin)
-        nbFilePerRow = 7  
-        
-        infosContenuDossier = dossier.entryInfoList(QtCore.QDir.AllEntries | 
-                QtCore.QDir.NoDotAndDotDot, QtCore.QDir.DirsFirst)
-        for num, _file in enumerate(infosContenuDossier):
-            rowIcone = round((num+1)/(nbFilePerRow+1))*2
-            columnIcone = num%nbFilePerRow
-            icone = QtGui.QIcon(QtGui.QFileIconProvider().icon(_file).pixmap(100,100))  
-            #icone = QtGui.QIcon(QtGui.QPixmap("DSCN2382.JPG"))            
-            item = QtGui.QStandardItem(icone, "plop")
-            self.files.setItem(rowIcone, columnIcone, item)
-
-    
-        
-            
-            
-                   
-
-class MyMainWindow(QtGui.QWidget):
-    
-    def __init__(self):
-        QtGui.QMainWindow.__init__(self)
-#        self.finder = TableSwitcher(12, 8, self)
-        plop = QtGui.QHBoxLayout(self)
-        self.setLayout(plop)
-        plop.addWidget(self.finder)
-        self.finder.horizontalHeader().hide()
-        self.finder.verticalHeader().hide()
-        self.finder.setShowGrid(False)
-        self.finder.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-        self.listageFichiers(".")
-        
-    def listageFichiers(self, chemin):
-        hauteurImage = 48
-        hauteurTexte = 18
-         
-        nbFilePerRow = self.finder.columnCount()        
-        
-        dossier = QtCore.QDir(chemin)
-        infosContenuDossier = dossier.entryInfoList(QtCore.QDir.AllEntries | 
-                QtCore.QDir.NoDotAndDotDot, QtCore.QDir.DirsFirst)
-        print infosContenuDossier
-        print os.listdir('.')
-     
-        for num, _file in enumerate(infosContenuDossier):
-            rowIcone = round((num+1)/(nbFilePerRow+1))*2
-            columnIcone = num%nbFilePerRow
-     
-            foo = QtGui.QFileIconProvider()
-            print foo.icon(_file).pixmap(10,10)
-            icone = QtGui.QLabel()
-            icone.setAlignment(QtCore.Qt.AlignCenter);
-            icone.setPixmap(foo.icon(_file).pixmap(hauteurImage, hauteurImage))
-            self.finder.setCellWidget(rowIcone, columnIcone, icone)
-             
-            finderItem = QtGui.QTableWidgetItem(_file.fileName())
-            finderItem.setTextAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter);
-            self.finder.setItem(rowIcone+1, columnIcone, finderItem)
-             
-            self.finder.setRowHeight(rowIcone, hauteurImage)
-            self.finder.setRowHeight(rowIcone+1, hauteurTexte*2.5);
-             
-            self.finder.setColumnWidth(columnIcone, hauteurImage*2.5);
