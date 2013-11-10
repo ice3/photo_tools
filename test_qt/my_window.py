@@ -64,6 +64,8 @@ class MyQListView(QtGui.QListView):
         self.setResizeMode(QtGui.QListView.Adjust)
         #boolean to allow drag or not
         self.boolTest = False
+        
+        self.highlightedIndex = QtCore.QModelIndex()
             
     def move_element(self, itemSrc, itemDest):
         """ When mouse released after a drag and drop operation, move
@@ -140,14 +142,21 @@ class MyQListView(QtGui.QListView):
         """
         super(MyQListView, self).dragMoveEvent(event)
         print "qlistview dragmove"
+        updateIndex = self.highlightedIndex
         #if the drag is from an item of the qlistview, accept it
         if event.mimeData().hasFormat('MyQListView Item'):
+            self.highlightedIndex = self.indexAt(event.pos())
+#            self.visualRect(self.indexAt(event.pos()))
             event.setDropAction(QtCore.Qt.MoveAction)
             event.accept()
+            self.update(self.highlightedIndex)
         #else, ignore (will put a 'forbidden' cursor)
         else:
-#            self.highlightedRect = QtCore.QRect()
+            self.highlightedIndex = QtCore.QModelIndex()
             event.ignore()
+            
+        self.update(updateIndex)
+        
         #on redessine le rectangle qu'on vient de modifier
 #        self.update(updateRect)
 
@@ -168,10 +177,12 @@ class MyQListView(QtGui.QListView):
                             itemFromIndex(self.indexAt(drop_event.pos()))
             #move the items as asked
             self.move_element(itemSrc, itemDest)
+            self.highlightedIndex = QtCore.QModelIndex()
             #set action to move event
             drop_event.setDropAction(QtCore.Qt.MoveAction)
             drop_event.accept()
         else:
+            self.highlightedIndex = QtCore.QModelIndex()
             drop_event.ignore()
 
     def create_mini_pixmap(self):
@@ -222,6 +233,8 @@ class MyQListView(QtGui.QListView):
         drag.setHotSpot(QtCore.QPoint(0, 0))
         drag.setPixmap(pixmap)
         
+        self.highlightedIndex = self.indexAt(event.pos())
+        
         #execute QDrag.
         #If accepted by other than MoveAction : it has left the window
         if drag.exec_(QtCore.Qt.MoveAction) != QtCore.Qt.MoveAction:
@@ -235,12 +248,16 @@ class MyQListView(QtGui.QListView):
         """
         super(MyQListView, self).paintEvent(event)
         print "paintEvent"
-        print event.rect() 
-        
-        rect = self.visualRect(self.indexAt(QtCore.QPoint(104,55)))
-        print rect
-        rect.setX(rect.x() - 10)
-        rect.setWidth(10)
+
+        rect = self.visualRect(self.highlightedIndex)
+        x = rect.x() - 10
+        y = rect.y()
+        width = 10
+        height = rect.height()
+        print x, y, width, height
+#        rectangle = QtCore.QRect(x, y, width, height)
+#        rect.setWidth(10)
+#        print rect
 
         painter = QtGui.QPainter()
         painter.begin(self.viewport())
