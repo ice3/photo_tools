@@ -199,8 +199,6 @@ class MyQListView(QtGui.QListView):
         QtGui.QListView.mousePressEvent(self, event)
         # Check if where we clic is a selected item
         clicOn = self.indexAt(event.pos())
-#        print event.pos()
-#        print self.visualRect(clicOn)
         if clicOn in self.selectedIndexes():
             self.boolTest = True
         #if not, return - don't start a drag and drop
@@ -228,7 +226,7 @@ class MyQListView(QtGui.QListView):
         #If accepted by other than MoveAction : it has left the window
         if drag.exec_(QtCore.Qt.MoveAction) != QtCore.Qt.MoveAction:
             print "not moved"
-            
+
     def paintEvent(self, event):
         super(MyQListView, self).paintEvent(event)
         print "paintEvent"
@@ -283,7 +281,6 @@ class MyQListView(QtGui.QListView):
         space_around_img = QtCore.QSize(50, 30)
         width = QtCore.QSize(delta_width, 0) +  self.iconSize() + space_around_img
         self.setGridSize(width)
-
 
 class ExplorateurListView(QtGui.QWidget):
     """
