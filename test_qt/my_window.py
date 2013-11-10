@@ -87,14 +87,15 @@ class MyQListView(QtGui.QListView):
         qu'il y ait le bon nombre d'item par ligne, mais ça laisse un gros espace sur la droite. C'est ce que l'on veut
         changer.
         """
-        # separation between the items
-        grid_sep = 50
-        dx = grid_sep + 10 # don't know where the 10 comes from... maybe the right margin...
+
+        # width of the QListView
         width = self.size().width()
-        # TODO : maybe refactoring here ? take the image size instead of a hack
-        # TODO : set the spacing to 50 and remove the grid sep...
-        img_size = self.parent().slider.value() # the slider set the value of the QIcon
-        # What is the size of a grid element
+        # separation between the items
+        # we can't use the setSpacing and the setGridSize at the same time (otherwise we would have used setSpacing)
+        x_grid_sep = 50
+        dx = x_grid_sep + 10 # don't know where the 10 comes from... maybe the right margin...
+        img_size = self.iconSize().width()
+        # get the size of a grid element (image + spacing)
         grid_elem_size = img_size + dx + self.spacing()
         nb_grid_shown = width / grid_elem_size
         # The number can be bigger than the number of elements in the list
@@ -102,13 +103,9 @@ class MyQListView(QtGui.QListView):
         width_used = nb_grid_shown * grid_elem_size
         # The lost space in the right side that we want to get rid of
         empty_width = width - width_used
-        print '||  empty width : ', empty_width,
         delta_width = empty_width*1.0 / (nb_grid_shown + 1) # +1 for ZeroDivisionError and to count the number of spaces
-        print "||  delta : ", delta_width
-        # TODO : is the space_around_ig really needed if we set the spacing ?
         space_around_img = QtCore.QSize(50, 30)
         width = QtCore.QSize(delta_width, 0) +  self.iconSize() + space_around_img
-        print 'largeur : ', width
         self.setGridSize(width)
 
 class ExplorateurListView(QtGui.QWidget):
