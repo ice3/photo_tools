@@ -71,16 +71,14 @@ class MyQListView(QtGui.QListView):
         print modified
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
-            self.change_grid_size()
 
     def dragMoveEvent(self, event):
         pass
 
 
     def resizeEvent(self, event):
-
-        super(MyQListView, self).resizeEvent(event)
         self.change_grid_size()
+        super(MyQListView, self).resizeEvent(event)
 
     def change_grid_size(self):
         """
@@ -99,21 +97,20 @@ class MyQListView(QtGui.QListView):
         print '||  taille grille : ', grid_elem_size,
 
         nb_grid_shown = width / grid_elem_size
+        nb_grid_shown = min(nb_grid_shown, len(self.parent().list_img))
         print ' ||  nb elem aff : ', nb_grid_shown,
 
         width_used = nb_grid_shown * grid_elem_size
         empty_width = width - width_used
         print '||  empty width : ', empty_width,
 
-        try :
-            delta_width = empty_width / nb_grid_shown
-        except ZeroDivisionError :
-            delta_width = 0
+        delta_width = empty_width*1.0 / (nb_grid_shown + 1) # +1 for ZeroDivisionError and to count the number of spaces
         print "||  delta : ", delta_width
 
-        width = QtCore.QSize(delta_width , 0) +  self.gridSize()
+        space_around_img = QtCore.QSize(50, 30)
+        width = QtCore.QSize(delta_width, 0) +  self.iconSize() + space_around_img
         print 'largeur : ', width
-        #self.setGridSize(width)
+        self.setGridSize(width)
 
         #new_size_width = (self.size().width() - x_util)*1.0/nb_img_aff
         #print 'size_width', new_size_width
@@ -213,4 +210,5 @@ class ExplorateurListView(QtGui.QWidget):
         
     def update_icon_size(self, event):
         self.vue_liste.setIconSize(QtCore.QSize(event, event))
-        self.vue_liste.setGridSize(QtCore.QSize(event + 50, event + 50))    
+        #self.vue_liste.setGridSize(QtCore.QSize(event + 50, event + 50))
+        self.vue_liste.change_grid_size()
