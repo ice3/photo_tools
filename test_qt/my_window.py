@@ -228,6 +228,11 @@ class MyQListView(QtGui.QListView):
             print "not moved"
 
     def paintEvent(self, event):
+        """
+        Redraw list when needed
+        during drag'n drop, draw a QRect on the left of the item where is the
+        mouse.
+        """
         super(MyQListView, self).paintEvent(event)
         print "paintEvent"
         print event.rect() 
