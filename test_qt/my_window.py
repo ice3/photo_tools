@@ -87,36 +87,29 @@ class MyQListView(QtGui.QListView):
         qu'il y ait le bon nombre d'item par ligne, mais ça laisse un gros espace sur la droite. C'est ce que l'on veut
         changer.
         """
-
-        dx = 50 + 10
+        # separation between the items
+        grid_sep = 50
+        dx = grid_sep + 10 # don't know where the 10 comes from... maybe the right margin...
         width = self.size().width()
-        print '\nlargeur widget : ', width,
-
-        img_size = self.parent().slider.value()
+        # TODO : maybe refactoring here ? take the image size instead of a hack
+        # TODO : set the spacing to 50 and remove the grid sep...
+        img_size = self.parent().slider.value() # the slider set the value of the QIcon
+        # What is the size of a grid element
         grid_elem_size = img_size + dx + self.spacing()
-        print '||  taille grille : ', grid_elem_size,
-
         nb_grid_shown = width / grid_elem_size
+        # The number can be bigger than the number of elements in the list
         nb_grid_shown = min(nb_grid_shown, len(self.parent().list_img))
-        print ' ||  nb elem aff : ', nb_grid_shown,
-
         width_used = nb_grid_shown * grid_elem_size
+        # The lost space in the right side that we want to get rid of
         empty_width = width - width_used
         print '||  empty width : ', empty_width,
-
         delta_width = empty_width*1.0 / (nb_grid_shown + 1) # +1 for ZeroDivisionError and to count the number of spaces
         print "||  delta : ", delta_width
-
+        # TODO : is the space_around_ig really needed if we set the spacing ?
         space_around_img = QtCore.QSize(50, 30)
         width = QtCore.QSize(delta_width, 0) +  self.iconSize() + space_around_img
         print 'largeur : ', width
         self.setGridSize(width)
-
-        #new_size_width = (self.size().width() - x_util)*1.0/nb_img_aff
-        #print 'size_width', new_size_width
-        #new_size = QtCore.QSize(new_size_width + taille_image, taille_image)
-        #print new_size
-        #self.setGridSize(new_size)
 
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
