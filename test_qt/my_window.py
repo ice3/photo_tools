@@ -124,72 +124,94 @@ class MyQListView(QtGui.QListView):
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
         
-#    def dragEnterEvent(self, event):
-#        print("drag enter event")
-#        event.acceptProposedAction()        
-#        #super(MyQListView, self).dragEnterEvent(event)
-#    
+    def dragEnterEvent(self, event):
+        #drag accepted only if it is a drag from the qlistView
+        print "listWidget dragenter"
+        if event.mimeData().hasFormat('MyQListView Item'):
+            event.accept()
+        else:
+            event.ignore()
+
 
     def dragLeaveEvent(self, e):
         print "dragLeave"
+        e.accept()
         
-    
+        
+    def dragMoveEvent(self, event):      
+        print "qlistview dragmove"
+        #if the drag is from an item of the qlistview, accept it
+        if event.mimeData().hasFormat('MyQListView Item'):
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.accept()
+        #s'il y a déjà une pièce à l'endroit où on est, où qu'on drag un
+        #objet inconnu, on ignore
+        else:
+#            self.highlightedRect = QtCore.QRect()
+            event.ignore()
+        #on redessine le rectangle qu'on vient de modifier
+#        self.update(updateRect)
+        
     def mouseMoveEvent(self, e):
         QtGui.QListView.mouseMoveEvent(self, e)
         print "call mouseMove"
 
-        #on regarde où on vient de cliquer :
-            #on ne crée le qdrag que si on vient de cliquer sur un item
-            #et qu'au moins un item de la liste est selectionné, sinon rien
-        clic_on = self.model().itemFromIndex(self.indexAt(e.pos()))
-        clic_on = self.indexAt(e.pos())
+#        #on regarde où on vient de cliquer :
+#            #on ne crée le qdrag que si on vient de cliquer sur un item
+#            #et qu'au moins un item de la liste est selectionné, sinon rien
+#        clic_on = self.model().itemFromIndex(self.indexAt(e.pos()))
+#        clic_on = self.indexAt(e.pos())
+#        
+#        if not self.bool_test:
+#            return
+##        print clic_on
+##        print self.selectedIndexes()
+##        if not clic_on in self.selectedIndexes():
+##            return
+#
+##        if (not isinstance(clic_on, QtGui.QStandardItem)
+##                or not self.selectedIndexes()):
+##            return
+#        # write the relative cursor position to mime data
+#        mimeData = QtCore.QMimeData()
+#        # simple string with 'x,y'
+#        mimeData.setText('%d,%d' % (e.x(), e.y()))
+#
+#        pixmap = self.create_mini_pixmap()
+#
+#        # make a QDrag
+#        drag = QtGui.QDrag(self)
+#        # put our MimeData
+#        drag.setMimeData(mimeData)
+#        # set its Pixmap
+#        drag.setPixmap(pixmap)
+#        # shift the Pixmap so that it coincides with the cursor position
+#        drag.setHotSpot(QtCore.QPoint(0, 0))
+#        print 'source : ', drag.source(), '    dest : ', drag.target()
+#
+#        # start the drag operation
+#        # exec_ will return the accepted action from dropEvent
+#        a = drag.exec_(QtCore.Qt.CopyAction | QtCore.Qt.MoveAction)
+#        if a == QtCore.Qt.MoveAction:
+#            print 'moved'
+#        else:
+#            print 'copied'
+#        print "drop action : ", a
+#        print "copy - move", QtCore.Qt.CopyAction, QtCore.Qt.MoveAction
+#        print 'source : ', drag.source(), '    dest : ', drag.target()
         
-        if not self.bool_test:
-            return
-#        print clic_on
-#        print self.selectedIndexes()
-#        if not clic_on in self.selectedIndexes():
-#            return
-
-#        if (not isinstance(clic_on, QtGui.QStandardItem)
-#                or not self.selectedIndexes()):
-#            return
-        # write the relative cursor position to mime data
-        mimeData = QtCore.QMimeData()
-        # simple string with 'x,y'
-        mimeData.setText('%d,%d' % (e.x(), e.y()))
-
-        pixmap = self.create_mini_pixmap()
-
-        # make a QDrag
-        drag = QtGui.QDrag(self)
-        # put our MimeData
-        drag.setMimeData(mimeData)
-        # set its Pixmap
-        drag.setPixmap(pixmap)
-        # shift the Pixmap so that it coincides with the cursor position
-        drag.setHotSpot(QtCore.QPoint(0, 0))
-        print 'source : ', drag.source(), '    dest : ', drag.target()
-
-        # start the drag operation
-        # exec_ will return the accepted action from dropEvent
-        a = drag.exec_(QtCore.Qt.CopyAction | QtCore.Qt.MoveAction)
-        if a == QtCore.Qt.MoveAction:
-            print 'moved'
+    def dropEvent(self, drop_event):
+        print('listView drop event')
+        if drop_event.mimeData().hasFormat('MyQListView Item'):
+            item_src = [self.model().itemFromIndex(index) for
+                        index in self.selectedIndexes()]
+            item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
+            print 'source, dest', item_src, item_dest
+            self.move_element(item_src, item_dest)
+            drop_event.setDropAction(QtCore.Qt.MoveAction)
+            drop_event.accept()
         else:
-            print 'copied'
-        print "drop action : ", a
-        print "copy - move", QtCore.Qt.CopyAction, QtCore.Qt.MoveAction
-        print 'source : ', drag.source(), '    dest : ', drag.target()
-        
-#    def dropEvent(self, drop_event):
-#        print('drop event')
-#        print self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-#        item_src = [self.model().itemFromIndex(index) for
-#                    index in self.selectedIndexes()]
-#        item_dest = self.model().itemFromIndex(self.indexAt(drop_event.pos()))
-#        print 'source, dest', item_src, item_dest
-#        self.move_element(item_src, item_dest)
+            drop_event.ignore()
 
     def create_mini_pixmap(self):
         size = QtCore.QSize(40, 40)
@@ -201,16 +223,36 @@ class MyQListView(QtGui.QListView):
         return pixmap     
 
     def mousePressEvent(self, e):
+        print "plistview mouse press"
         QtGui.QListView.mousePressEvent(self, e)
+        #on regarde s'il y a une pièce là où on clique
         clic_on = self.indexAt(e.pos())
-        print "clic sur item", clic_on in self.selectedIndexes()
         if clic_on in self.selectedIndexes():
             self.bool_test = True
         else:
             self.bool_test = False
-        if e.button() == QtCore.Qt.LeftButton:
-            print 'press'
-#
+            return
+
+        itemData = QtCore.QByteArray()
+        dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
+        pixmap = self.create_mini_pixmap()
+        
+        #mettre la pixmap dans les infos
+        dataStream << pixmap #<< location
+        
+        mimeData = QtCore.QMimeData()
+        mimeData.setData('MyQListView Item', itemData)
+        #qdrag de la piece sur laquelle on est (avec ses infos et sa pixmap)
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mimeData)
+        drag.setHotSpot(QtCore.QPoint(0,0))
+        drag.setPixmap(pixmap)
+        
+        if drag.exec_(QtCore.Qt.MoveAction) != QtCore.Qt.MoveAction:
+            print "not moved"
+        
+        
+        
 #
 #class MyQListView(QtGui.QListView):
 #    def __init__(self, parent):
@@ -292,7 +334,7 @@ class MyModel (QtGui.QStandardItemModel):
 class ExplorateurListView(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
-        self.setAcceptDrops(True)
+#        self.setAcceptDrops(True)
         
         self.cache = {}
         self.layout = QtGui.QVBoxLayout()

@@ -61,7 +61,7 @@ class ListView(QtGui.QListView):
         self.parent().update_model()
         
     def mouseMoveEvent(self, e):
-#        QtGui.QListView.mouseMoveEvent(self, e)
+        QtGui.QListView.mouseMoveEvent(self, e)
         print "call mouseMove"
 #        if e.buttons() != QtCore.Qt.RightButton:
 #            return
