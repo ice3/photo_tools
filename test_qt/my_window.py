@@ -100,27 +100,37 @@ class MyQListView(QtGui.QListView):
         else :
             # sinon, on met à l'endroit demandé
             dest_row = item_dest.row()
-        print "dest_row", dest_row    
+#        print "dest_row", dest_row 
+   
         # item_src liste dans l'ordre où on clique les objets
-        # on la remet dans l'ordre des photos
+        # on la remet dans l'ordre actuel des photos
         item_src = sorted(item_src, key = lambda x: -x.row())
+        # on recupere la liste des rangs des items qu'on a selectionnes pour
+        #deplacement
         src_rows =[i.row() for i in item_src]
+        #on recupere les noms de fichiers correspondant aux rangs,
+        #en les enlevant de la liste en meme temps
         items_to_insert = [self.parent().list_img.pop(i) for i in src_rows]
-        print "reste liste", self.parent().list_img
+#        print "reste liste", self.parent().list_img
         items_to_insert.reverse()
-        print "items to insert", items_to_insert
+#        print "items to insert", items_to_insert
+        #on compte combien on a enleve d'elements avant le rang d'insertion
+        #pour savoir ou inserer ces elements
         nb_elem_inf_dest  = sum([1 for i in src_rows if i < dest_row])
-        print "nb_elem inf dest", nb_elem_inf_dest
-        print "endroit d'insertion", dest_row-nb_elem_inf_dest
+#        print "nb_elem inf dest", nb_elem_inf_dest
+#        print "endroit d'insertion", dest_row-nb_elem_inf_dest
+        #on recontstruit la liste des fichiers avec le nouvel ordre.
         self.parent().list_img = self.parent().list_img[:dest_row-nb_elem_inf_dest] +\
                                 items_to_insert + self.parent().list_img[dest_row-nb_elem_inf_dest:]
-                                     
+        #on update le model pour que la vue affiche le nouvel ordre                                
         self.parent().update_model()
 
     def wheelEvent(self, event):
         super(MyQListView, self).wheelEvent(event)
         delta = self.parent().slider.value() + event.delta()/20
         modified = QtGui.QApplication.keyboardModifiers()
+        #si on fait ctrl+molette, on grossit/diminue la taille des images
+        #en changeant la valeur du slider
         if modified == QtCore.Qt.ControlModifier:
             self.parent().slider.setValue(delta)
         
@@ -132,29 +142,23 @@ class MyQListView(QtGui.QListView):
         else:
             event.ignore()
 
-
     def dragLeaveEvent(self, e):
+        #we accept the left drag, without setting a dropAction
         print "dragLeave"
         e.accept()
         
-        
-    def dragMoveEvent(self, event):      
+    def dragMoveEvent(self, event):  
+        super(MyQListView, self).dragMoveEvent(event)
         print "qlistview dragmove"
         #if the drag is from an item of the qlistview, accept it
         if event.mimeData().hasFormat('MyQListView Item'):
             event.setDropAction(QtCore.Qt.MoveAction)
             event.accept()
-        #s'il y a déjà une pièce à l'endroit où on est, où qu'on drag un
-        #objet inconnu, on ignore
         else:
 #            self.highlightedRect = QtCore.QRect()
             event.ignore()
         #on redessine le rectangle qu'on vient de modifier
 #        self.update(updateRect)
-        
-    def mouseMoveEvent(self, e):
-        QtGui.QListView.mouseMoveEvent(self, e)
-        print "call mouseMove"
 
 #        #on regarde où on vient de cliquer :
 #            #on ne crée le qdrag que si on vient de cliquer sur un item
@@ -201,6 +205,7 @@ class MyQListView(QtGui.QListView):
 #        print 'source : ', drag.source(), '    dest : ', drag.target()
         
     def dropEvent(self, drop_event):
+        #we drop only if the qdrag is from the qlistView
         print('listView drop event')
         if drop_event.mimeData().hasFormat('MyQListView Item'):
             item_src = [self.model().itemFromIndex(index) for
