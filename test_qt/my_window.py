@@ -264,6 +264,8 @@ class MyQListView(QtGui.QListView):
         QtGui.QListView.mousePressEvent(self, event)
         # Check if where we clic is a selected item
         clicOn = self.indexAt(event.pos())
+#        print event.pos()
+#        print self.visualRect(clicOn)
         if clicOn in self.selectedIndexes():
             self.boolTest = True
         #if not, return - don't start a drag and drop
@@ -291,6 +293,34 @@ class MyQListView(QtGui.QListView):
         #If accepted by other than MoveAction : it has left the window
         if drag.exec_(QtCore.Qt.MoveAction) != QtCore.Qt.MoveAction:
             print "not moved"
+            
+    def paintEvent(self, event):
+        super(MyQListView, self).paintEvent(event)
+        print "paintEvent"
+        print event.rect() 
+        
+        rect = self.visualRect(self.indexAt(QtCore.QPoint(104,55)))
+        print rect
+        rect.setX(rect.x() - 10)
+        rect.setWidth(10)
+
+        painter = QtGui.QPainter()
+        painter.begin(self.viewport())
+#        painter.fillRect(event.rect(), QtCore.Qt.white)
+
+#        if self.highlightedRect.isValid():
+        painter.setBrush(QtGui.QColor(0, 0, 100, 127))
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.drawRect(rect)
+
+#        for rect, pixmap in zip(self.pieceRects, self.piecePixmaps):
+#            painter.drawPixmap(rect, pixmap)
+
+        painter.end()
+
+
+        
+        
             
             
             
