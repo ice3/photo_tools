@@ -42,10 +42,13 @@ class Button(QtGui.QPushButton):
 
         # start the drag operation
         # exec_ will return the accepted action from dropEvent
-        if drag.exec_(QtCore.Qt.CopyAction | QtCore.Qt.MoveAction) == QtCore.Qt.MoveAction:
+        a = drag.exec_(QtCore.Qt.CopyAction | QtCore.Qt.MoveAction)
+        if a == QtCore.Qt.MoveAction:
             print 'moved'
         else:
             print 'copied'
+        print "drop action : ", a
+        print "copy - move", QtCore.Qt.CopyAction, QtCore.Qt.MoveAction
         print 'source : ', drag.source(), '    dest : ', drag.target()
 
 
@@ -98,13 +101,13 @@ class Example(QtGui.QWidget):
             # store it
             self.buttons.append(button)
             # set the drop action as Copy
-            e.setDropAction(QtCore.Qt.MoveAction)
+            e.setDropAction(QtCore.Qt.CopyAction)
         else:
             # move
             # so move the dragged button (i.e. event.source())
             e.source().move(e.pos()-QtCore.QPoint(x, y))
             # set the drop action as Move
-            e.setDropAction(QtCore.Qt.CopyAction)
+            e.setDropAction(QtCore.Qt.MoveAction)
         # tell the QDrag we accepted it
         e.accept()
 
