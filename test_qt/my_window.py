@@ -4,70 +4,6 @@ Created on Mon Nov 04 18:38:18 2013
 
 @author: Amandine
 
-Hello, 
-
-I am trying to drag and drop QStandardItems that are in a QStandardItemModel 
-represented by a QListView in Icon viewMode. The aim is to graphically reorder 
-the icons of the list (there is no external drag and drop).
-
-It works fine to just drag, drop and reorder the items into the model (and see 
-it in the view). However, what I would like to do is to change what happens 
-during the drag-and-drop operation : by default, the selected items follow 
-the cursor, but are not gathered together, which is ugly. You can see an 
-example of what happens in the picture bellow, which is taken when the mouse 
-is still pressed.
-
-![How items selected move during the drag-and-drop operation][1]
-
-
-  [1]: http://i.stack.imgur.com/wbyeD.png
-
-To change this, I would like to reimplement the methods showing that, in 
-order to display only one image following the cursor during the drag-and-drop 
-operation, and then call the dropEvent method to reorder according to the 
-new item positions. To display that, I tried to override the dragMoveEvent 
-or mouseMoveEvent methods like that:
-
-    class MyQListView(QtGui.QListView):
-
-        def __init__(self, parent):
-            QtGui.QListView.__init__(self, parent)
-            self.setAcceptDrops(True)
-            self.setDragEnabled(True)
-            self.boolTest = True
-
-        def mouseMoveEvent(self, event):
-            print('drag move event')
-            size = QtCore.QSize(40, 40)
-            pixmap = self.parent().cache[self.parent().list_img[0]].\
-                        scaled(size)
-            mimeData = QtCore.QMimeData() #no need for mimeData
-            drag = QtGui.QDrag(self)
-            drag.setMimeData(mimeData)
-            drag.setPixmap(pixmap)
-            drag.setHotSpot(QtCore.QPoint(0, 0))
-            drag.exec_()
-            print 'source : ', drag.source(), '    dest : ', drag.target()
-
-
-When I call drag.exec_(), then, the dropEvent method is not called when I 
-release the mouse (whereas before I override this method (or if I comment 
-the 'drag.exec_' line), it worked fine). Hence, the QDrag object seems to 
-block all drag-and-drop signals. 
-
-Moreover, when I use this method, my image is displayed as wanted, but with
- a "forbidden" cursor, meaning that drag-and-drop seems to be disabled. 
- Nethertheless, I enabled it. 
-
-Moreover, in the last line of code, drag.target() is always None.
-
-If I put the same method in dragMoveEvent(self, event) instead of 
-mouseMoveEvent(self, event), everything freezes when I release the mouse 
-after drag-and-drop.
-
-
-
-I am using Qt4.7 with Python 2.7 on Windows 7.
 """
 from PyQt4 import QtGui, QtCore
 import os
@@ -75,7 +11,6 @@ import os
 import time
 
 import re
-#from itertools import groupby
 
 #PATH_TO_TEST = r'D://Amandine DONNEES//Photos//Photos famille//' +\
 #                r'2013//Lyon_12-13-14-Avril'
@@ -312,19 +247,44 @@ class MyQListView(QtGui.QListView):
         painter.setBrush(QtGui.QColor(0, 0, 100, 127))
         painter.setPen(QtCore.Qt.NoPen)
         painter.drawRect(rect)
-
 #        for rect, pixmap in zip(self.pieceRects, self.piecePixmaps):
 #            painter.drawPixmap(rect, pixmap)
 
         painter.end()
 
+    def resizeEvent(self, event):
+        self.change_grid_size()
+        super(MyQListView, self).resizeEvent(event)
 
-        
-        
-            
-            
-            
-        
+    def change_grid_size(self):
+        """
+        Change l'espace entre les items en fonction de la taille de la listView.
+        Quand on change la taille de la fenetre (et donc de la liste) les items se réorganisent automatiquement pour
+        qu'il y ait le bon nombre d'item par ligne, mais ça laisse un gros espace sur la droite. C'est ce que l'on veut
+        changer.
+        """
+
+        # width of the QListView
+        width = self.size().width()
+        # separation between the items
+        # we can't use the setSpacing and the setGridSize at the same time (otherwise we would have used setSpacing)
+        x_grid_sep = 50
+        dx = x_grid_sep + 10 # don't know where the 10 comes from... maybe the right margin...
+        img_size = self.iconSize().width()
+        # get the size of a grid element (image + spacing)
+        grid_elem_size = img_size + dx + self.spacing()
+        nb_grid_shown = width / grid_elem_size
+        # The number can be bigger than the number of elements in the list
+        nb_grid_shown = min(nb_grid_shown, len(self.parent().list_img))
+        width_used = nb_grid_shown * grid_elem_size
+        # The lost space in the right side that we want to get rid of
+        empty_width = width - width_used
+        delta_width = empty_width*1.0 / (nb_grid_shown + 1) # +1 for ZeroDivisionError and to count the number of spaces
+        space_around_img = QtCore.QSize(50, 30)
+        width = QtCore.QSize(delta_width, 0) +  self.iconSize() + space_around_img
+        self.setGridSize(width)
+
+
 class ExplorateurListView(QtGui.QWidget):
     """
     A widget representing a file explorator, with a 
@@ -417,5 +377,4 @@ class ExplorateurListView(QtGui.QWidget):
         Update the size of the icons in the MyQListView
         """
         self.vue_liste.setIconSize(QtCore.QSize(event, event))
-        self.vue_liste.setGridSize(QtCore.QSize(event + 50, event + 50))    
-            
+        self.vue_liste.change_grid_size()
