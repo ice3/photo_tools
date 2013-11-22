@@ -12,7 +12,7 @@ from PyQt4 import QtGui
 
 if __name__ == '__main__':
     """
-    Method called to launch VIVECA program, set-up language, etc.
+   
     """
     #create a Qt application
     print 'debut'
@@ -21,4 +21,3 @@ if __name__ == '__main__':
     MA_FENETRE = Complements_gui.MyMainWindow()
     MA_FENETRE.show()
     sys.exit(APP.exec_())
-    
