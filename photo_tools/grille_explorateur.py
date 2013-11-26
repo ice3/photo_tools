@@ -203,10 +203,14 @@ class MyQListView(QtGui.QListView):
         print "mouse move called"
         #if we did not move enought since the clic point, consider it was just
         #a clic, and don't start the drag.
-        
         if ((self.dragStartPosition - event.pos()).manhattanLength() < 
                 QtGui.QApplication.startDragDistance()):
             print "too short"
+            return
+        #check if the point where we clicked is an item. If not, do not
+        #start a dnd, the user wants to select multiple items.
+        if not self.indexAt(self.dragStartPosition) in self.selectedIndexes():
+            super(MyQListView, self).mouseMoveEvent(event)
             return
         #else, start the drag and drop operation :
                 
@@ -214,6 +218,8 @@ class MyQListView(QtGui.QListView):
         select = [self.model().itemFromIndex(index) for
                         index in self.selectedIndexes()]
         selected = [s.row() for s in select]
+
+
         #Create QByteArray to put data in QDrag QMimeData
         itemData = QtCore.QByteArray()
         dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
