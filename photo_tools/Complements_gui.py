@@ -21,6 +21,23 @@ class MyMainWindow(QtGui.QMainWindow):
         self.ui = fenetre_principale.Ui_MainWindow()
         self.ui.setupUi(self)
 #        self.ui.grille_widget = grille_explorateur.ExplorateurListView()
+    
+        self.dirModel = QtGui.QFileSystemModel()
+        self.dirModel.setRootPath("/")
+        
+#        print self.ui.frame.setSi
+
+        self.ui.treeView_2.setModel(self.dirModel)
+        self.ui.treeView_2.setColumnHidden(1, True)
+        self.ui.treeView_2.setColumnHidden(2, True) 
+        self.ui.treeView_2.setColumnHidden(3, True) 
+        self.ui.treeView_2.setHeaderHidden(True)
+        
+        _resize = lambda : self.ui.treeView_2.resizeColumnToContents(0)
+        self.ui.treeView_2.clicked.connect(_resize)
+        self.ui.treeView_2.expanded.connect(_resize)
+        self.dirModel.layoutChanged.connect(_resize)        
+        self.ui.treeView_2.collapsed.connect(_resize)
         
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.setRange(20, 500)
