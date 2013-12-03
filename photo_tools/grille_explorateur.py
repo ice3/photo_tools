@@ -101,7 +101,7 @@ class MyQListView(QtGui.QListView):
                         self.parent().list_img[destRow-nbElemInfDest:]
                         
         # Update model in order to see the new order into the view  
-        self.parent().update_model()
+        self.parent().update_model(self.parent().path)
 
     def wheelEvent(self, event):
         """ When mous wheel is moved
@@ -124,7 +124,17 @@ class MyQListView(QtGui.QListView):
         if event.mimeData().hasFormat('MyQListView Item'):
             event.accept()
         else:
-            event.ignore()
+            source_dir = event.mimeData().urls()[0].path()
+            source_dir = source_dir[1:]
+            imgExt = ('bmp', 'png', 'jpg', 'jpeg')
+            list_img = [name for name in os.listdir(source_dir) 
+                    if name.lower().endswith(imgExt)]
+            print list_img
+            if list_img:
+                event.accept()
+                print "accept event"
+            else:
+                event.ignore()
 
     def dragLeaveEvent(self, event):
         """
@@ -147,6 +157,9 @@ class MyQListView(QtGui.QListView):
             event.accept()
             self.update(self.highlightedIndex)
         #else, ignore (will put a 'forbidden' cursor)
+        elif event.mimeData().hasUrls():
+            event.accept()
+            print "accept move"
         else:
             self.highlightedIndex = QtCore.QModelIndex()
             event.ignore()
@@ -174,6 +187,11 @@ class MyQListView(QtGui.QListView):
             #set action to move event
             drop_event.setDropAction(QtCore.Qt.MoveAction)
             drop_event.accept()
+        elif drop_event.mimeData().hasUrls() :
+            source_dir = drop_event.mimeData().urls()[0].path()
+            source_dir = source_dir[1:]
+            drop_event.accept()
+            self.parent().init_model(source_dir) 
         else:
             self.highlightedIndex = QtCore.QModelIndex()
             drop_event.ignore()
@@ -328,14 +346,17 @@ class ExplorateurListView(QtGui.QWidget):
         self.list_img = []   
         #dict : cache[filename]=pixmap to save the pixmap 
         self.cache = {}
+        #path of images
+        self.path = PATH_TO_TEST
         
         # initialisation
+        self.init_model(self.path)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.vue_liste.setModel(self.modele)
         self.slider.setRange(20, 500)
         self.slider.setValue(100)
         self.slider.setMaximumSize(150, 1000)
-        self.create_model(PATH_TO_TEST)
+        
         self.layout.addWidget(self.vue_liste)
         self.setLayout(self.layout)
         self.setWindowTitle('Move pictures')
@@ -343,7 +364,15 @@ class ExplorateurListView(QtGui.QWidget):
         #Connections signal - slot
         self.slider.valueChanged.connect(self.update_icon_size)
         
-    def update_model(self):
+    def init_model(self, path):
+        #reset list of image filenames and cache
+        self.list_img = []   
+        self.cache = {}
+        self.path = path
+        #reset model and fill it with the new path
+        self.create_model(path)
+        
+    def update_model(self, path):
         """ 
         Reorder items in the model as required
         (called after a drag and drop operation in the view)
@@ -357,7 +386,7 @@ class ExplorateurListView(QtGui.QWidget):
             pixmap = QtGui.QPixmap()
             if not file_name in self.cache:                
                 print 'cache pas exister', file_name
-                pixmap = QtGui.QPixmap(PATH_TO_TEST + os.sep + file_name)
+                pixmap = QtGui.QPixmap(path + os.sep + file_name)
                 pixmap = pixmap.scaledToWidth(
                                     500, QtCore.Qt.SmoothTransformation)
                 self.cache[file_name] = pixmap
@@ -370,20 +399,21 @@ class ExplorateurListView(QtGui.QWidget):
             
         print "temps update modele : ", time.clock()-t1
 
-    def create_model(self, chemin):
+    def create_model(self, path):
         """
         Create the model for the QListView. 
         Get all image file names, and create icons from the images rescaled.
         """
+        self.modele.clear()
         imgExt = ('bmp', 'png', 'jpg', 'jpeg')
-        self.list_img = [name for name in os.listdir(chemin) 
+        self.list_img = [name for name in os.listdir(path) 
                     if name.lower().endswith(imgExt)]
         self.list_img.sort(key=alphanum_key)
 
         t1 = time.clock()        
         for file_name in self.list_img:
             t2 = time.clock()
-            pixmap = QtGui.QPixmap(PATH_TO_TEST + os.sep + file_name)
+            pixmap = QtGui.QPixmap(path + os.sep + file_name)
             pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
      
             if not file_name in self.cache:

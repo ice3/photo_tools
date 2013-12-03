@@ -39,6 +39,7 @@ class MyMainWindow(QtGui.QMainWindow):
         self.dirModel.layoutChanged.connect(_resize)        
         self.ui.treeView_2.collapsed.connect(_resize)
         
+        
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.setRange(20, 500)
         self.slider.setValue(100)
