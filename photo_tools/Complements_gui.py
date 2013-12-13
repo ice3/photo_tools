@@ -26,7 +26,8 @@ class MyMainWindow(QtGui.QMainWindow):
         self.dirModel.setRootPath("/")
         
 #        print self.ui.frame.setSi
-
+        self.ui.splitter.setSizes([50, 160])
+    
         self.ui.treeView_2.setModel(self.dirModel)
         self.ui.treeView_2.setColumnHidden(1, True)
         self.ui.treeView_2.setColumnHidden(2, True) 
@@ -39,15 +40,20 @@ class MyMainWindow(QtGui.QMainWindow):
         self.dirModel.layoutChanged.connect(_resize)        
         self.ui.treeView_2.collapsed.connect(_resize)
         
-        
+        self.frame_taille = QtGui.QWidget()
+        self.layout_taille = QtGui.QHBoxLayout(self.frame_taille)
+        self.layout_taille.setMargin(0)
+        self.label_slider = QtGui.QLabel("Taille des vignettes :")
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.setRange(20, 500)
         self.slider.setValue(100)
+        self.layout_taille.addWidget(self.label_slider)
+        self.layout_taille.addWidget(self.slider)
                 
         self.explorateur = grille_explorateur.ExplorateurListView(self.slider)
         
         self.spacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         
-        self.ui.gridLayout_2.addWidget(self.explorateur, 0, 0, 1, 2)        
-        self.ui.gridLayout_2.addWidget(self.slider, 1, 1, 1, 1)
+        self.ui.gridLayout_2.addWidget(self.explorateur, 0, 0, 1, 2)      
+        self.ui.gridLayout_2.addWidget(self.frame_taille, 1, 1, 1, 1)
         self.ui.gridLayout_2.addItem(self.spacer, 1, 0, 1, 1)

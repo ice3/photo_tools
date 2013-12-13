@@ -129,10 +129,9 @@ class MyQListView(QtGui.QListView):
             imgExt = ('bmp', 'png', 'jpg', 'jpeg')
             list_img = [name for name in os.listdir(source_dir) 
                     if name.lower().endswith(imgExt)]
-            print list_img
+#            print list_img
             if list_img:
                 event.accept()
-                print "accept event"
             else:
                 event.ignore()
 
@@ -156,10 +155,10 @@ class MyQListView(QtGui.QListView):
             event.setDropAction(QtCore.Qt.MoveAction)
             event.accept()
             self.update(self.highlightedIndex)
-        #else, ignore (will put a 'forbidden' cursor)
+
         elif event.mimeData().hasUrls():
             event.accept()
-            print "accept move"
+        #else, ignore (will put a 'forbidden' cursor)
         else:
             self.highlightedIndex = QtCore.QModelIndex()
             event.ignore()
@@ -204,6 +203,7 @@ class MyQListView(QtGui.QListView):
             + number of selected item(s)
         """
         size = 60
+        print self.parent().cache
         pixmap = self.parent().cache[self.parent().list_img[selected[0]]].scaledToWidth(size)
         #transparent
         painter = QtGui.QPainter(pixmap)
@@ -405,23 +405,46 @@ class ExplorateurListView(QtGui.QWidget):
         Get all image file names, and create icons from the images rescaled.
         """
         self.modele.clear()
+        t1 = time.clock()  
         imgExt = ('bmp', 'png', 'jpg', 'jpeg')
         self.list_img = [name for name in os.listdir(path) 
                     if name.lower().endswith(imgExt)]
         self.list_img.sort(key=alphanum_key)
 
-        t1 = time.clock()        
         for file_name in self.list_img:
-            t2 = time.clock()
-            pixmap = QtGui.QPixmap(path + os.sep + file_name)
-            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
-     
-            if not file_name in self.cache:
-                self.cache[file_name] = pixmap                 
-            icone = QtGui.QIcon(pixmap)
-            item = QtGui.QStandardItem(icone, file_name) 
+#            pixmap= QtGui.QImage(path + os.sep + file_name)
+#            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
+#            pixmap.fill()
+#            icone = QtGui.QIcon(path + os.sep + file_name)
+#            icone = QtGui.QIcon(QtGui.QPixmap().fromImage(pixmap))
+#            item = QtGui.QStandardItem(icone, file_name)
+            item = QtGui.QStandardItem(file_name)
             self.modele.appendRow(item)
-            print 'temps chargement 1 image : ', time.clock()-t2, file_name
+        import threading
+        
+        def lool() :
+            print "lolilol  debut"
+            pixmap = QtGui.QIcon(path + os.sep + self.list_img[0])
+#            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
+#            icone = QtGui.QIcon(QtGui.QPixmap().fromImage(pixmap))      
+            self.modele.item(0).setIcon(pixmap)
+            print "lololol fin"
+        
+
+        lol = threading.Timer(3, lool)
+        lol.start()
+
+#        for file_name in self.list_img:
+#            t2 = time.clock()
+#            pixmap = QtGui.QPixmap(path + os.sep + file_name)
+#            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
+#     
+#            if not file_name in self.cache:
+#                self.cache[file_name] = pixmap                 
+#            icone = QtGui.QIcon(pixmap)
+#            item = QtGui.QStandardItem(icone, file_name) 
+#            self.modele.appendRow(item)
+#            print 'temps chargement 1 image : ', time.clock()-t2, file_name
         print "temps creation modele : ", time.clock()-t1
         
     def update_icon_size(self, event):
