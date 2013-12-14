@@ -10,6 +10,9 @@ from PyQt4 import QtGui, QtCore
 import re
 import os
 import time
+import Queue, threading
+
+import threads
 
 #PATH_TO_TEST = r'D://Amandine DONNEES//Photos//Photos famille//' +\
 #                r'2013//Lyon_12-13-14-Avril'
@@ -101,7 +104,7 @@ class MyQListView(QtGui.QListView):
                         self.parent().list_img[destRow-nbElemInfDest:]
                         
         # Update model in order to see the new order into the view  
-        self.parent().update_model(self.parent().path)
+        self.parent().update_model()
 
     def wheelEvent(self, event):
         """ When mous wheel is moved
@@ -348,6 +351,8 @@ class ExplorateurListView(QtGui.QWidget):
         self.cache = {}
         #path of images
         self.path = PATH_TO_TEST
+        ## queue
+        self.queue = Queue.deque()
         
         # initialisation
         self.init_model(self.path)
@@ -363,16 +368,19 @@ class ExplorateurListView(QtGui.QWidget):
 
         #Connections signal - slot
         self.slider.valueChanged.connect(self.update_icon_size)
+        self.connect(self, QtCore.SIGNAL("imagesLoaded()"), self,
+                     QtCore.SLOT("fillCacheFromQueue()"))
         
     def init_model(self, path):
         #reset list of image filenames and cache
         self.list_img = []   
         self.cache = {}
         self.path = path
+        self.queue = Queue.deque()
         #reset model and fill it with the new path
-        self.create_model(path)
+        self.create_model()
         
-    def update_model(self, path):
+    def update_model(self):
         """ 
         Reorder items in the model as required
         (called after a drag and drop operation in the view)
@@ -386,7 +394,7 @@ class ExplorateurListView(QtGui.QWidget):
             pixmap = QtGui.QPixmap()
             if not file_name in self.cache:                
                 print 'cache pas exister', file_name
-                pixmap = QtGui.QPixmap(path + os.sep + file_name)
+                pixmap = QtGui.QPixmap(self.path + os.sep + file_name)
                 pixmap = pixmap.scaledToWidth(
                                     500, QtCore.Qt.SmoothTransformation)
                 self.cache[file_name] = pixmap
@@ -399,7 +407,7 @@ class ExplorateurListView(QtGui.QWidget):
             
         print "temps update modele : ", time.clock()-t1
 
-    def create_model(self, path):
+    def create_model(self):
         """
         Create the model for the QListView. 
         Get all image file names, and create icons from the images rescaled.
@@ -407,10 +415,13 @@ class ExplorateurListView(QtGui.QWidget):
         self.modele.clear()
         t1 = time.clock()  
         imgExt = ('bmp', 'png', 'jpg', 'jpeg')
-        self.list_img = [name for name in os.listdir(path) 
+        self.list_img = [name for name in os.listdir(self.path) 
                     if name.lower().endswith(imgExt)]
         self.list_img.sort(key=alphanum_key)
 
+        pixmap= QtGui.QPixmap(QtCore.QSize(500, 500))
+        pixmap.fill()
+        icone = QtGui.QIcon(pixmap)
         for file_name in self.list_img:
 #            pixmap= QtGui.QImage(path + os.sep + file_name)
 #            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
@@ -418,34 +429,56 @@ class ExplorateurListView(QtGui.QWidget):
 #            icone = QtGui.QIcon(path + os.sep + file_name)
 #            icone = QtGui.QIcon(QtGui.QPixmap().fromImage(pixmap))
 #            item = QtGui.QStandardItem(icone, file_name)
-            item = QtGui.QStandardItem(file_name)
+            item = QtGui.QStandardItem(icone, file_name)
             self.modele.appendRow(item)
-        import threading
+        print "tps init model : ", time.clock() - t1
+            
+        threadLoadImages = threads.loadAllImages(self)
         
-        def lool() :
-            print "lolilol  debut"
-            pixmap = QtGui.QIcon(path + os.sep + self.list_img[0])
-#            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
-#            icone = QtGui.QIcon(QtGui.QPixmap().fromImage(pixmap))      
-            self.modele.item(0).setIcon(pixmap)
-            print "lololol fin"
+        def plop(i):
+            
+            icone = QtGui.QIcon(self.path + os.sep + self.list_img[i])
+            self.modele.item(i).setIcon(icone)
+            for i in xrange(len(self.list_img)-1):
+                t2 = time.clock()
+                time.sleep(0.001)
+                print "end slip", time.clock() - t2
+                i += 1
+                icone = QtGui.QIcon(self.path + os.sep + self.list_img[i])
+                self.modele.item(i).setIcon(icone)
+                print "end setIcon", time.clock() - t2
         
+       
+        
+        threadLoadImages.start()
+#        threadLoadImages.join()
+#        
 
-        lol = threading.Timer(3, lool)
-        lol.start()
-
-#        for file_name in self.list_img:
-#            t2 = time.clock()
-#            pixmap = QtGui.QPixmap(path + os.sep + file_name)
-#            pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
-#     
-#            if not file_name in self.cache:
-#                self.cache[file_name] = pixmap                 
-#            icone = QtGui.QIcon(pixmap)
-#            item = QtGui.QStandardItem(icone, file_name) 
-#            self.modele.appendRow(item)
-#            print 'temps chargement 1 image : ', time.clock()-t2, file_name
-        print "temps creation modele : ", time.clock()-t1
+        def plip():
+            for file_name in self.list_img:
+                t2 = time.clock()
+                pixmap = QtGui.QPixmap(self.path + os.sep + file_name)
+                pixmap = pixmap.scaledToWidth(500, QtCore.Qt.SmoothTransformation)
+         
+                if not file_name in self.cache:
+                    self.cache[file_name] = pixmap                 
+                icone = QtGui.QIcon(pixmap)
+                item = QtGui.QStandardItem(icone, file_name) 
+                self.modele.appendRow(item)
+                print 'temps chargement 1 image : ', time.clock()-t2, file_name
+            print "temps creation modele : ", time.clock()-t1
+            
+#        t = threading.Timer(1, plip)  
+#        t.start()
+        
+        
+    @QtCore.pyqtSlot()
+    def fillCacheFromQueue(self):
+        for image, file_name in self.queue:
+            pixmap = QtGui.QPixmap().fromImage(image)     
+            if not file_name in self.cache:
+                self.cache[file_name] = pixmap 
+        self.update_model()
         
     def update_icon_size(self, event):
         """
